@@ -1,0 +1,26 @@
+--extra-index-url https://download.pytorch.org/whl/cu128
+
+torch
+torchvision
+gdown
+dvc
+mlflow
+numpy
+pandas 
+matplotlib
+seaborn
+python-box
+pyYAML
+tqdm
+ensure
+joblib
+types-PyYAML
+scipy
+Flask
+Flask-Cors
+dagshub
+fastapi
+streamlit
+pydantic
+uvicorn
+-e .
