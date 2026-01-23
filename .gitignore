@@ -205,3 +205,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+research/Chest-CT-Scan-data.zip
+
+artifacts
+artifacts/*
