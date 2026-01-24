@@ -152,16 +152,11 @@ class Training:
             batch_size = best_params["batch_size"]
             dropout = best_params["dropout"]
             weight_decay = best_params["weight_decay"]
-            suffix = "best"
+            suffix = "best_hparams"
             logger.info("Starting model training with the best combination hyperparameters")
         
         else:
-            lr = self.config.params_learning_rate
-            batch_size = self.config.params_batch_size
-            dropout = 0.6 
-            weight_decay = 5e-4
-            suffix = "default"
-            logger.info("Training with default hyperparameters")
+            raise RuntimeError("model hyperparameters are not found. Perform hyperparameter tuning before starting the training pipeline")
 
         best_val_loss = float("inf")
         patience = 10
@@ -249,9 +244,11 @@ class Training:
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 counter = 0 
-                model_path = self.config.trained_model_path.with_name(f"model_{suffix}.pt")
-                self.save_model(path=model_path,
-                                model=self.model)
+                self.save_model(
+                    path=self.config.best_model_path,  
+                    model=self.model,
+                )
+                
                 logger.info(f"Saving model at {epoch + 1} with train_loss:{train_loss:.4f} and val_loss:{val_loss:.4f}")
             else:
                 counter += 1 
@@ -282,10 +279,6 @@ class Training:
                     f"Val Recall: {recall:.4f} | "
                     f"Val F1: {f1:.4f}"
                 )
-
-        # model_path = self.config.trained_model_path.with_name(f"model_{suffix}.pt")
-        # self.save_model(path=model_path, model=self.model)
-
 
         self._plot_confusion_matrix(suffix)
         self._plot_loss_curves(suffix)

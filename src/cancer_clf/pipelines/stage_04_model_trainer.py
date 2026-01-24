@@ -1,6 +1,7 @@
 from src.cancer_clf.config.configuration import ConfigurationManager
 from src.cancer_clf.components.model_trainer import Training
 from src.cancer_clf.logger.logger import logger 
+from pathlib import Path
 
 STAGE_NAME = "Model Training stage"
 
@@ -12,8 +13,19 @@ class ModelTrainingPipeline:
         try:
             config = ConfigurationManager()
             training_config = config.get_training_config()
-            training = Training(config=training_config)
-            training.train()
+
+            if training_config.best_model_path.exists():
+                logger.info(
+                    f"Canonical model already exists at {training_config.best_model_path}. "
+                    "Skipping training stage."
+                )
+                return
+
+            else:
+                config = ConfigurationManager()
+                training_config = config.get_training_config()
+                training = Training(config=training_config)
+                training.train()
         
         except Exception as e:
             logger.exception(e)

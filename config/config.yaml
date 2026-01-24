@@ -26,4 +26,4 @@ hyperparameter_tuning:
 
 training:
   root_dir: artifacts/training
-  trained_model_path: artifacts/training/model.pt
+  best_model_path: artifacts/training/model_best_hparams.pt

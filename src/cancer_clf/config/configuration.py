@@ -74,8 +74,8 @@ class ConfigurationManager:
         create_directories([Path(training.root_dir)])
 
         training_config = TrainingConfig(root_dir=Path(training.root_dir),
-                                         trained_model_path=Path(training.trained_model_path),
                                          updated_base_model_path=Path(prepare_base_model.updated_base_model_path),
+                                         best_model_path=Path(training.best_model_path),
                                          train_data=Path(ingestion.train_dir),
                                          val_data=Path(ingestion.val_dir),
                                          params_epochs=params.EPOCHS,
@@ -88,8 +88,8 @@ class ConfigurationManager:
         return training_config
     
     def get_evaluation_config(self) -> EvaluationConfig:
-        eval_config = EvaluationConfig(path_of_model="artifacts/training/model.pt",
-                                       training_data="artifacts/data_ingestion/Chest-CT-Scan-data",
+        eval_config = EvaluationConfig(path_of_model="artifacts/training/model_best_hparams.pt",
+                                       test_data="artifacts/data_ingestion/Chest-CT-Scan-data/test",
                                        mlflow_uri="https://dagshub.com/jsm.dgme/chest-cancer-net.mlflow",
                                        all_params=self.params,
                                        params_image_size=self.params.IMAGE_SIZE,

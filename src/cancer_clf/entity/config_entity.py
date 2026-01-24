@@ -40,7 +40,7 @@ class HyperparameterTuningConfig:
 @dataclass(frozen=True)
 class TrainingConfig: 
     root_dir: Path
-    trained_model_path: Path
+    best_model_path: Path
     updated_base_model_path: Path
     train_data: Path
     val_data: Path
