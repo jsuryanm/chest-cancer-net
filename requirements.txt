@@ -24,4 +24,5 @@ streamlit
 pydantic
 uvicorn
 opencv-python
+torchmetrics
 -e .
