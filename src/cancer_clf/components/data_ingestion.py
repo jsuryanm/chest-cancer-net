@@ -34,9 +34,17 @@ class DataIngestion:
         zip_file_path: str
         Extract the zip file into the data directory
         '''
+        try:    
+            unzip_path = self.config.unzip_dir
+            os.makedirs(unzip_path,exist_ok=True)
 
-        unzip_path = self.config.unzip_dir
-        os.makedirs(unzip_path,exist_ok=True)
+            logger.info(f"Extracting the zip file:{self.config.local_data_file}")
 
-        with zipfile.ZipFile(self.config.local_data_file,"r") as zip_ref:
-            zip_ref.extractall(unzip_path)
+            with zipfile.ZipFile(self.config.local_data_file,"r") as zip_ref:
+                zip_ref.extractall(unzip_path)
+            
+            logger.info(f"Extraction completed at: {unzip_path}")
+        
+        except Exception as e:
+            logger.exception("Failed during extracting the zip file")
+            raise e
