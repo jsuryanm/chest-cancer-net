@@ -210,3 +210,6 @@ research/Chest-CT-Scan-data.zip
 
 artifacts
 artifacts/*
+
+logs
+logs/*

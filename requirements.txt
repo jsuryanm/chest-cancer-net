@@ -23,4 +23,5 @@ fastapi
 streamlit
 pydantic
 uvicorn
+opencv-python
 -e .

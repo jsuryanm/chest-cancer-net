@@ -1,1 +1,9 @@
-key: val
+AUGMENTATION: True 
+IMAGE_SIZE: [224,224]
+CHANNELS: 3
+BATCH_SIZE: 16
+INCLUDE_TOP: False # False: Replace the classifier head, True: Use original FC layers
+EPOCHS: 2 # Use more epochs
+CLASSES: 2 
+WEIGHTS: imagenet
+LEARNING_RATE: 0.01
