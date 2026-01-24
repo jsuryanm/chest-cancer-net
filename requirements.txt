@@ -25,4 +25,5 @@ pydantic
 uvicorn
 opencv-python
 torchmetrics
+optuna
 -e .

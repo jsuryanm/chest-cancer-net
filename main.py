@@ -1,7 +1,8 @@
 from src.cancer_clf.logger.logger import logger
 from src.cancer_clf.pipelines.stage_01_data_ingestion import DataIngestionTrainingPipeline
 from src.cancer_clf.pipelines.stage_02_prepare_base_model import PrepareBaseModelTrainingPipeline
-from src.cancer_clf.pipelines.stage_03_model_trainer import ModelTrainingPipeline
+from src.cancer_clf.pipelines.stage_03_hyperparameter_tuning import HyperparameterTuningTrainingPipeline
+from src.cancer_clf.pipelines.stage_04_model_trainer import ModelTrainingPipeline
 
 STAGE_NAME = "Data Ingestion stage"
 
@@ -21,6 +22,17 @@ try:
    logger.info(f">>>>>> stage {STAGE_NAME} started <<<<<<")
    prepare_base_model = PrepareBaseModelTrainingPipeline()
    prepare_base_model.main()
+   logger.info(f">>>>>> stage {STAGE_NAME} completed <<<<<<\n\nx==========x")
+except Exception as e:
+        logger.exception(e)
+        raise e
+
+STAGE_NAME = "Hyperparameter tuning"
+try: 
+   logger.info(f"*******************")
+   logger.info(f">>>>>> stage {STAGE_NAME} started <<<<<<")
+   tuner = HyperparameterTuningTrainingPipeline()
+   tuner.main()
    logger.info(f">>>>>> stage {STAGE_NAME} completed <<<<<<\n\nx==========x")
 except Exception as e:
         logger.exception(e)

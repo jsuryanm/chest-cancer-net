@@ -2,7 +2,7 @@ from src.cancer_clf.config.configuration import ConfigurationManager
 from src.cancer_clf.components.model_trainer import Training
 from src.cancer_clf.logger.logger import logger 
 
-STAGE_NAME = "Training"
+STAGE_NAME = "Model Training stage"
 
 class ModelTrainingPipeline:
     def __init__(self):
@@ -13,8 +13,6 @@ class ModelTrainingPipeline:
             config = ConfigurationManager()
             training_config = config.get_training_config()
             training = Training(config=training_config)
-            training.load_model()
-            training.get_dataloaders()
             training.train()
         
         except Exception as e:

@@ -4,13 +4,14 @@ from zipfile import ZipFile
 import time 
 from pathlib import Path
 from collections import Counter
+import json
 
 import matplotlib.pyplot as plt 
 import seaborn as sns
 
 import torch
 from torch import nn 
-from torch.utils.data import DataLoader,random_split,WeightedRandomSampler
+from torch.utils.data import DataLoader,WeightedRandomSampler
 from torchvision import datasets,transforms,models
 
 from torchmetrics import (Accuracy,
@@ -29,11 +30,7 @@ class Training:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         set_seed(self.config.params_seed)
-        self.history = {"train_loss": [],
-                        "val_loss": [],
-                        "train_acc": [],
-                        "val_acc": []
-                        }
+        
 
         
         self.train_accuracy = Accuracy(task="binary").to(self.device)
@@ -44,14 +41,29 @@ class Training:
         self.val_f1 = F1Score(task="binary").to(self.device)
         self.confmat = ConfusionMatrix(task='binary').to(self.device)
 
-    def load_model(self):
+    def _load_best_hyperparameters(self):
+        path = Path("artifacts/hyperparameter_tuning/best_params.json")
+
+        if not path.exists():
+            logger.info("No best_params.json found. Using default hyperparameters.")
+            return None 
+        
+        logger.info(f"Loading best hyperparameters from {path}")
+        with open(path,"r") as f:
+            return json.load(f)
+
+
+    def load_model(self,dropout: float):
         self.model = models.resnet18(weights="IMAGENET1K_V1")
+        for param in self.model.parameters():
+            param.requires_grad = False
+
 
         in_features = self.model.fc.in_features
         self.model.fc = nn.Sequential(
             nn.Linear(in_features,128),
             nn.ReLU(),
-            nn.Dropout(p=0.6),
+            nn.Dropout(p=dropout),
             nn.Linear(128,1)
         )
 
@@ -66,13 +78,8 @@ class Training:
 
         self.model = self.model.to(self.device)
 
-    def get_dataloaders(self):
+    def get_dataloaders(self,batch_size: int):
         image_size = tuple(self.config.params_image_size)
-
-        full_dataset = datasets.ImageFolder(self.config.training_data)
-
-        val_size = int(0.4*len(full_dataset))
-        train_size = len(full_dataset) - val_size
 
         valid_transform = transforms.Compose([
             transforms.Resize(image_size),
@@ -97,37 +104,34 @@ class Training:
 
         generator = torch.Generator().manual_seed(self.config.params_seed)
 
-        train_ds,val_ds = random_split(full_dataset,
-                                       [train_size,val_size],
-                                       generator=generator)
+        train_ds = datasets.ImageFolder(root=self.config.train_data,
+                                        transform=train_transform)
+        val_ds = datasets.ImageFolder(root=self.config.val_data,
+                                      transform=valid_transform)
         
-        train_ds.dataset.transform = train_transform
-        val_ds.dataset.transform = valid_transform
 
-        train_indices = train_ds.indices
-        targets = [full_dataset.samples[i][1] for i in train_indices]
+        targets = [labels for _,labels in train_ds.samples]
         class_counts = Counter(targets)
 
         class_weights = {cls:1.0/count for cls,count in class_counts.items()}
 
-        sample_weights = [class_weights[full_dataset.samples[i][1]] for i in train_indices]
+        sample_weights = [class_weights[label] for label in targets]
 
         sampler = WeightedRandomSampler(weights=sample_weights,
-                                        num_samples=len(train_indices),
+                                        num_samples=len(sample_weights),
                                         generator=generator,
                                         replacement=True)
 
         self.train_loader = DataLoader(train_ds,
-                                       batch_size=self.config.params_batch_size,
+                                       batch_size=batch_size,
                                        sampler=sampler,
                                        pin_memory=True)
         
         self.val_loader = DataLoader(val_ds,
-                                     batch_size=self.config.params_batch_size,
+                                     batch_size=batch_size,
                                      shuffle=False,
                                      pin_memory=True)
         
-        logger.info(f"Total samples: {len(full_dataset)}")
         logger.info(f"Train samples: {len(train_ds)}")
         logger.info(f"Val samples: {len(val_ds)}")
         logger.info(f"Train batches:{len(self.train_loader)}")
@@ -135,17 +139,44 @@ class Training:
 
         
     def train(self):
+        self.history = {"train_loss": [],
+                        "val_loss": [],
+                        "train_acc": [],
+                        "val_acc": []
+                        }
+        
+        best_params = self._load_best_hyperparameters()
+
+        if best_params:
+            lr = best_params["learning_rate"]
+            batch_size = best_params["batch_size"]
+            dropout = best_params["dropout"]
+            weight_decay = best_params["weight_decay"]
+            suffix = "best"
+            logger.info("Starting model training with the best combination hyperparameters")
+        
+        else:
+            lr = self.config.params_learning_rate
+            batch_size = self.config.params_batch_size
+            dropout = 0.6 
+            weight_decay = 5e-4
+            suffix = "default"
+            logger.info("Training with default hyperparameters")
+
         best_val_loss = float("inf")
         patience = 10
         counter = 0
+
+        self.load_model(dropout=dropout)
+        self.get_dataloaders(batch_size=batch_size)
 
 
         loss_fn = nn.BCEWithLogitsLoss()
 
         optimizer = torch.optim.AdamW(
             filter(lambda p: p.requires_grad, self.model.parameters()),
-            lr=self.config.params_learning_rate,
-            weight_decay=1e-4
+            lr=lr,
+            weight_decay=weight_decay
         )
 
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer=optimizer,
@@ -218,7 +249,9 @@ class Training:
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
                 counter = 0 
-                self.save_model(path=self.config.trained_model_path,model=self.model)
+                model_path = self.config.trained_model_path.with_name(f"model_{suffix}.pt")
+                self.save_model(path=model_path,
+                                model=self.model)
                 logger.info(f"Saving model at {epoch + 1} with train_loss:{train_loss:.4f} and val_loss:{val_loss:.4f}")
             else:
                 counter += 1 
@@ -250,16 +283,15 @@ class Training:
                     f"Val F1: {f1:.4f}"
                 )
 
-        self.save_model(
-            path=self.config.trained_model_path,
-            model=self.model
-        )
-
-        self._plot_confusion_matrix()
-        self._plot_loss_curves()
+        # model_path = self.config.trained_model_path.with_name(f"model_{suffix}.pt")
+        # self.save_model(path=model_path, model=self.model)
 
 
-    def _plot_confusion_matrix(self):
+        self._plot_confusion_matrix(suffix)
+        self._plot_loss_curves(suffix)
+
+
+    def _plot_confusion_matrix(self,suffix: str):
         cm = self.confmat.compute().cpu().numpy()
 
         plt.figure(figsize=(6, 6))
@@ -273,15 +305,15 @@ class Training:
         )
         plt.xlabel("Predicted")
         plt.ylabel("Actual")
-        plt.title("Confusion Matrix")
+        plt.title(f"Confusion Matrix ({suffix})")
 
-        save_path = self.config.root_dir / "confusion_matrix.png"
+        save_path = self.config.root_dir / f"confusion_matrix_{suffix}.png"
         plt.savefig(save_path)
         plt.close()
 
         logger.info(f"Confusion matrix saved at: {save_path}")
 
-    def _plot_loss_curves(self):
+    def _plot_loss_curves(self,suffix: str):
         epochs = range(1, len(self.history["train_loss"]) + 1)
 
         plt.figure(figsize=(8, 6))
@@ -290,11 +322,11 @@ class Training:
 
         plt.xlabel("Epoch")
         plt.ylabel("Loss")
-        plt.title("Training vs Validation Loss")
+        plt.title(f"Training vs Validation Loss ({suffix})")
         plt.legend()
         plt.grid(True)
 
-        save_path = self.config.root_dir / "loss_curve.png"
+        save_path = self.config.root_dir / f"loss_curve_{suffix}.png"
         plt.savefig(save_path)
         plt.close()
 
