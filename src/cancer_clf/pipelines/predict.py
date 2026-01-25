@@ -28,7 +28,7 @@ class PredictionPipeline:
                                  nn.Dropout(p=0.6),
                                  nn.Linear(128,1))
 
-        model_path = os.path.join("artifacts","training","model_best_hparams.pt")
+        model_path = os.path.join("models","model_best_hparams.pt")
 
         model.load_state_dict(torch.load(model_path,
                                          map_location=self.device,

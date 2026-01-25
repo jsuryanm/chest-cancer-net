@@ -1,47 +1,20 @@
-# =====================
 # Git
-# =====================
 .git
 .gitignore
 
-# =====================
 # Python cache
-# =====================
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# =====================
-# Virtual environments
-# =====================
+# Virtual env
 venv/
 .env
 
-# =====================
 # Logs
-# =====================
 logs/
 *.log
 
-# =====================
-# OS junk
-# =====================
-.DS_Store
-Thumbs.db
-
-# =====================
-# Ignore heavy artifacts
-# =====================
-artifacts/data_ingestion/
-artifacts/data_ingestion/**
-artifacts/hyperparameter_tuning/
-artifacts/prepare_base_model/
-artifacts/training/*.png
-
-# ================================
-# ALLOW trained model for API
-# ================================
-!artifacts/
-!artifacts/training/
-!artifacts/training/model_best_hparams.pt
+# Training artifacts (never ship)
+artifacts/

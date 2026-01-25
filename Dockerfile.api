@@ -2,20 +2,20 @@ FROM python:3.12.12-slim
 
 WORKDIR /app
 
-# Copy package metadata FIRST
+# Install dependencies
 COPY setup.py pyproject.toml requirements.txt ./
-
 RUN pip install --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
+# Copy application code
 COPY . .
 
-RUN mkdir -p /app/artifacts/training
+# Copy inference model
+RUN mkdir -p /app/models
+COPY models/model_best_hparams.pt /app/models/model_best_hparams.pt
 
-COPY artifacts/training/model_best_hparams.pt \
-     /app/artifacts/training/model_best_hparams.pt
-
-RUN test -f /app/artifacts/training/model_best_hparams.pt
+# Fail fast if model missing
+RUN test -f /app/models/model_best_hparams.pt
 
 EXPOSE 8000
 
