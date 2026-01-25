@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v4
 
       # =========================
-      # 2️⃣ Configure AWS credentials
+      # 2️⃣ Configure AWS credentials (CI only)
       # =========================
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -39,14 +39,13 @@ jobs:
             ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
       # =========================
-      # 4️⃣ Build API image (NO CACHE)
+      # 4️⃣ Build API image (force fresh build)
       # =========================
       - name: Build API image
         run: |
           docker build --no-cache --pull \
             -f Dockerfile.api \
             -t chest-cancer-api:latest .
-
 
       # =========================
       # 5️⃣ Push API image to ECR
@@ -80,16 +79,40 @@ jobs:
             ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/chest-cancer-ui:latest
 
       # =========================
-      # 8️⃣ Deploy on EC2 (SSH)
+      # 8️⃣ Deploy on EC2 (FIXED)
       # =========================
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
+          username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
+
+            echo "Preparing app directory..."
+            mkdir -p ~/app
+            cd ~/app
+
+            echo "Writing docker-compose.yml..."
+            cat << 'EOF' > docker-compose.yml
+            services:
+              api:
+                image: ${API_IMAGE}
+                container_name: chest-cancer-api
+                ports:
+                  - "8000:8000"
+                restart: always
+
+              streamlit:
+                image: ${UI_IMAGE}
+                container_name: chest-cancer-ui
+                ports:
+                  - "8501:8501"
+                depends_on:
+                  - api
+                restart: always
+            EOF
 
             echo "Logging into ECR on EC2..."
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} |
