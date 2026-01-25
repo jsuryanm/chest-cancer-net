@@ -26,4 +26,6 @@ uvicorn
 opencv-python
 torchmetrics
 optuna
+requests
+python-multipart
 -e .

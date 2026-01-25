@@ -109,6 +109,7 @@ class Training:
         val_ds = datasets.ImageFolder(root=self.config.val_data,
                                       transform=valid_transform)
         
+        logger.info(f"train dataset class to idx mapping:{train_ds.class_to_idx}")
 
         targets = [labels for _,labels in train_ds.samples]
         class_counts = Counter(targets)
@@ -249,7 +250,7 @@ class Training:
                     model=self.model,
                 )
                 
-                logger.info(f"Saving model at {epoch + 1} with train_loss:{train_loss:.4f} and val_loss:{val_loss:.4f}")
+                logger.info(f"Saving model at {epoch + 1} with train_loss:{train_loss:.4f} and test_loss:{val_loss:.4f}")
             else:
                 counter += 1 
                 if counter >= patience:
@@ -273,11 +274,11 @@ class Training:
                     f"Epoch [{epoch+1}/{self.config.params_epochs}] | "
                     f"Train Loss: {train_loss:.4f} | "
                     f"Train Acc: {train_acc:.4f} | "
-                    f"Val Loss: {val_loss:.4f} | "
-                    f"Val Acc: {val_acc:.4f} | "
-                    f"Val Precision: {precision:.4f} | "
-                    f"Val Recall: {recall:.4f} | "
-                    f"Val F1: {f1:.4f}"
+                    f"Test Loss: {val_loss:.4f} | "
+                    f"Test Acc: {val_acc:.4f} | "
+                    f"Test Precision: {precision:.4f} | "
+                    f"Test Recall: {recall:.4f} | "
+                    f"Test F1: {f1:.4f}"
                 )
 
         self._plot_confusion_matrix(suffix)
@@ -311,11 +312,11 @@ class Training:
 
         plt.figure(figsize=(8, 6))
         plt.plot(epochs, self.history["train_loss"], label="Train Loss")
-        plt.plot(epochs, self.history["val_loss"], label="Validation Loss")
+        plt.plot(epochs, self.history["val_loss"], label="Test Loss")
 
         plt.xlabel("Epoch")
         plt.ylabel("Loss")
-        plt.title(f"Training vs Validation Loss ({suffix})")
+        plt.title(f"Training vs Test Loss ({suffix})")
         plt.legend()
         plt.grid(True)
 

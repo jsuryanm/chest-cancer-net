@@ -24,6 +24,7 @@ class HyperparameterTuning:
 
         train_tf = transforms.Compose([
             transforms.Resize(image_size),
+            transforms.Grayscale(num_output_channels=3),
             transforms.RandomRotation(10),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
@@ -35,6 +36,7 @@ class HyperparameterTuning:
 
         val_tf = transforms.Compose([
             transforms.Resize(image_size),
+            transforms.Grayscale(num_output_channels=3),
             transforms.ToTensor(),
             transforms.Normalize(
                 mean=[0.485, 0.456, 0.406],
