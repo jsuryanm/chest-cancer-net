@@ -208,8 +208,18 @@ __marimo__/
 
 research/Chest-CT-Scan-data.zip
 
-artifacts
-artifacts/*
-
 logs
 logs/*
+
+# Ignore all artifacts by default
+artifacts/*
+artifacts/**
+
+# BUT allow the trained model for inference
+!artifacts/
+!artifacts/training/
+!artifacts/training/model_best_hparams.pt
+
+
+
+

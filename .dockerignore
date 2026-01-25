@@ -1,37 +1,47 @@
+# =====================
 # Git
+# =====================
 .git
 .gitignore
 
+# =====================
 # Python cache
+# =====================
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Virtual env
+# =====================
+# Virtual environments
+# =====================
 venv/
 .env
 
-# Datasets (VERY IMPORTANT)
-artifacts/data_ingestion/
-artifacts/data_ingestion/**
-
-# Training artifacts not needed at runtime
-artifacts/training/*.png
-artifacts/hyperparameter_tuning/
-artifacts/prepare_base_model/
-
+# =====================
 # Logs
+# =====================
 logs/
 *.log
 
+# =====================
 # OS junk
+# =====================
 .DS_Store
 Thumbs.db
 
-# -----------------------------
-# Allow trained model for API
-# -----------------------------
+# =====================
+# Ignore heavy artifacts
+# =====================
+artifacts/data_ingestion/
+artifacts/data_ingestion/**
+artifacts/hyperparameter_tuning/
+artifacts/prepare_base_model/
+artifacts/training/*.png
+
+# ================================
+# ALLOW trained model for API
+# ================================
 !artifacts/
 !artifacts/training/
 !artifacts/training/model_best_hparams.pt
