@@ -160,8 +160,7 @@ Note:
 ## PART 3️⃣ — IAM User (GitHub Actions CI)
 
 ### Create User
-- Name: `github-actions-ci`
-- Access type: Programmatic
+- Name: `chest-user`
 
 ### Attach Policy
 - `AmazonEC2ContainerRegistryFullAccess`
