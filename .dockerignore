@@ -1,0 +1,30 @@
+# Git
+.git
+.gitignore
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+venv/
+.env
+
+# Datasets (VERY IMPORTANT)
+artifacts/data_ingestion/
+artifacts/data_ingestion/**
+
+# Training artifacts not needed at runtime
+artifacts/training/*.png
+artifacts/hyperparameter_tuning/
+artifacts/prepare_base_model/
+
+# Logs
+logs/
+*.log
+
+# OS junk
+.DS_Store
+Thumbs.db

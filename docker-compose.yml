@@ -1,0 +1,16 @@
+services:
+  api:
+    image: "${API_IMAGE}"
+    container_name: chest-cancer-api
+    ports:
+      - "8000:8000"
+    restart: always
+
+  streamlit:
+    image: "${UI_IMAGE}"
+    container_name: chest-cancer-ui
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+    restart: always

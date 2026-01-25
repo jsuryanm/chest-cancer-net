@@ -1,0 +1,82 @@
+name: Build & Deploy to EC2 
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ AWS auth
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # 3️⃣ Login to ECR
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password \
+            --region ${{ secrets.AWS_REGION }} |
+          docker login \
+            --username AWS \
+            --password-stdin \
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
+      # 4️⃣ Build API image
+      - name: Build API image
+        run: |
+          docker build -f Dockerfile.api -t chest-cancer-api:latest .
+
+      # 5️⃣ Push API image
+      - name: Push API image
+        run: |
+          docker tag chest-cancer-api:latest \
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/chest-cancer-api:latest
+
+          docker push \
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/chest-cancer-api:latest
+
+      # 6️⃣ Build Streamlit image
+      - name: Build Streamlit image
+        run: |
+          docker build -f Dockerfile.streamlit -t chest-cancer-ui:latest .
+
+      # 7️⃣ Push Streamlit image
+      - name: Push Streamlit image
+        run: |
+          docker tag chest-cancer-ui:latest \
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/chest-cancer-ui:latest
+
+          docker push \
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/chest-cancer-ui:latest
+
+      # 8️⃣ Deploy on EC2 (NO .env, runtime export only)
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            aws ecr get-login-password --region us-east-1 |
+            docker login --username AWS --password-stdin \
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+
+            export API_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/chest-cancer-api:latest
+            export UI_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/chest-cancer-ui:latest
+
+            docker pull $API_IMAGE
+            docker pull $UI_IMAGE
+
+            docker compose down || true
+            docker compose up -d

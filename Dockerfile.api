@@ -1,0 +1,22 @@
+FROM python:3.12.12-slim
+
+WORKDIR /app
+
+# Copy package metadata FIRST
+COPY setup.py pyproject.toml requirements.txt ./
+
+RUN pip install --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+RUN mkdir -p /app/artifacts/training
+
+COPY artifacts/training/model_best_hparams.pt \
+     /app/artifacts/training/model_best_hparams.pt
+
+RUN test -f /app/artifacts/training/model_best_hparams.pt
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

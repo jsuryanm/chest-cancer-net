@@ -1,7 +1,7 @@
 import streamlit as st 
 import requests
 
-API_URL = "http://localhost:8000/predict"
+API_URL = "http://api:8000/predict"
 
 st.set_page_config(page_title="Chest Cancer Classification",layout="centered")
 
