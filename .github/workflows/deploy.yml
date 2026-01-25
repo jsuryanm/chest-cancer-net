@@ -43,9 +43,10 @@ jobs:
       # =========================
       - name: Build API image
         run: |
-          docker build --no-cache \
+          docker build --no-cache --pull \
             -f Dockerfile.api \
             -t chest-cancer-api:latest .
+
 
       # =========================
       # 5️⃣ Push API image to ECR
