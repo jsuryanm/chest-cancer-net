@@ -28,3 +28,10 @@ logs/
 # OS junk
 .DS_Store
 Thumbs.db
+
+# -----------------------------
+# Allow trained model for API
+# -----------------------------
+!artifacts/
+!artifacts/training/
+!artifacts/training/model_best_hparams.pt
