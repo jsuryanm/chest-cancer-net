@@ -1,0 +1,148 @@
+schema: '2.0'
+stages:
+  data_ingestion:
+    cmd: python -m src.cancer_clf.pipelines.stage_01_data_ingestion
+    deps:
+    - path: config/config.yaml
+      hash: md5
+      md5: 87e1b5fb24ba8f26f6b207b4891d9ef4
+      size: 1016
+    - path: src/cancer_clf/pipelines/stage_01_data_ingestion.py
+      hash: md5
+      md5: d6fdd5340df2bb1f14308057cbfe7061
+      size: 955
+    outs:
+    - path: artifacts/data_ingestion/Chest-CT-Scan-data
+      hash: md5
+      md5: 656b26297b012cf8519186a715bb544d.dir
+      size: 98494862
+      nfiles: 686
+  prepare_base_model:
+    cmd: python -m src.cancer_clf.pipelines.stage_02_prepare_base_model
+    deps:
+    - path: config/config.yaml
+      hash: md5
+      md5: 87e1b5fb24ba8f26f6b207b4891d9ef4
+      size: 1016
+    - path: params.yaml
+      hash: md5
+      md5: 1cc6b0f8fb8dc5bbb2424fee17ec6d6f
+      size: 255
+    - path: src/cancer_clf/pipelines/stage_02_prepare_base_model.py
+      hash: md5
+      md5: 8e59e01ec46fdc604992d29672a4026b
+      size: 1008
+    params:
+      params.yaml:
+        CLASSES: 1
+        IMAGE_SIZE:
+        - 224
+        - 224
+        INCLUDE_TOP: false
+        LEARNING_RATE: 1e-05
+        WEIGHTS: imagenet
+    outs:
+    - path: artifacts/prepare_base_model
+      hash: md5
+      md5: f01de53e1f9fdb7915b9c79e10d7c8be.dir
+      size: 91888232
+      nfiles: 2
+  hyperparameter_tuning:
+    cmd: python -m src.cancer_clf.pipelines.stage_03_hyperparameter_tuning
+    deps:
+    - path: artifacts/data_ingestion/Chest-CT-Scan-data
+      hash: md5
+      md5: 656b26297b012cf8519186a715bb544d.dir
+      size: 98494862
+      nfiles: 686
+    - path: params.yaml
+      hash: md5
+      md5: 1cc6b0f8fb8dc5bbb2424fee17ec6d6f
+      size: 255
+    - path: src/cancer_clf/pipelines/stage_03_hyperparameter_tuning.py
+      hash: md5
+      md5: 90703522af8daa33ceb64951f8b3e7fe
+      size: 899
+    params:
+      params.yaml:
+        IMAGE_SIZE:
+        - 224
+        - 224
+        SEED: 42
+    outs:
+    - path: artifacts/hyperparameter_tuning/best_params.json
+      hash: md5
+      md5: dc8bcd4bde39f6a7c14f64fb2c265780
+      size: 152
+  training:
+    cmd: python -m src.cancer_clf.pipelines.stage_04_model_trainer
+    deps:
+    - path: artifacts/data_ingestion/Chest-CT-Scan-data/test
+      hash: md5
+      md5: 0c0e085837e03c087ef24be3f40c598e.dir
+      size: 7107481
+      nfiles: 53
+    - path: artifacts/data_ingestion/Chest-CT-Scan-data/train
+      hash: md5
+      md5: 2e844a22073eebd5716aae95003edace.dir
+      size: 34105353
+      nfiles: 239
+    - path: artifacts/hyperparameter_tuning/best_params.json
+      hash: md5
+      md5: dc8bcd4bde39f6a7c14f64fb2c265780
+      size: 152
+    - path: artifacts/prepare_base_model
+      hash: md5
+      md5: f01de53e1f9fdb7915b9c79e10d7c8be.dir
+      size: 91888232
+      nfiles: 2
+    - path: params.yaml
+      hash: md5
+      md5: 1cc6b0f8fb8dc5bbb2424fee17ec6d6f
+      size: 255
+    - path: src/cancer_clf/pipelines/stage_04_model_trainer.py
+      hash: md5
+      md5: 7642ad5780355f2cfebd950df3acdd5d
+      size: 1436
+    params:
+      params.yaml:
+        AUGMENTATION: true
+        BATCH_SIZE: 8
+        EPOCHS: 50
+        IMAGE_SIZE:
+        - 224
+        - 224
+        SEED: 42
+    outs:
+    - path: artifacts/training/model_best_hparams.pt
+      hash: md5
+      md5: bc9eebbf8662537c7377c6bd43f5509a
+      size: 45050589
+  evaluation:
+    cmd: python -m src.cancer_clf.pipelines.stage_05_model_evaluation
+    deps:
+    - path: artifacts/data_ingestion/Chest-CT-Scan-data/test
+      hash: md5
+      md5: 0c0e085837e03c087ef24be3f40c598e.dir
+      size: 7107481
+      nfiles: 53
+    - path: params.yaml
+      hash: md5
+      md5: 1cc6b0f8fb8dc5bbb2424fee17ec6d6f
+      size: 255
+    - path: src/cancer_clf/pipelines/stage_05_model_evaluation.py
+      hash: md5
+      md5: de9436c3b96d9800b14fcaa808ccf3a8
+      size: 991
+    params:
+      params.yaml:
+        BATCH_SIZE: 8
+        IMAGE_SIZE:
+        - 224
+        - 224
+        SEED: 42
+    outs:
+    - path: test_scores.json
+      hash: md5
+      md5: a2410d78ecd5b90ee2cfd0e44784e26c
+      size: 124
