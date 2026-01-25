@@ -40,7 +40,7 @@ This system classifies chest CT scans into:
 
 ---
 
-## Project Directory Structure (Authoritative)
+## Project Directory Structure 
 
 ```
 CHEST-CANCER-NET/
@@ -117,11 +117,6 @@ docker-compose up --build
 ---
 
 # AWS CONFIGURATION 
-
-This setup supports **CI/CD using GitHub Actions → Amazon ECR → EC2**,  
-✅ No secrets stored on EC2  
-✅ No retraining during deployment  
-
 ---
 
 ## 🧱 Architecture
