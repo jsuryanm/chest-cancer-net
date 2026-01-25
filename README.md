@@ -17,8 +17,6 @@ This system classifies chest CT scans into:
 
 ---
 
----
-
 ## Why ResNet-18?
 
 - Lightweight
